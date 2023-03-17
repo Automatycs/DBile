@@ -11,6 +11,9 @@ using namespace std;
 class Connection {
     public:
         int connect(int size, char** args);
+        string get_user();
+        string get_sql();
+        bool get_status();
 
     private:
         const string flags[8] = {"-n", "-h", "-v", "-l", "-u", "-p", "-s", "-f"};
@@ -21,12 +24,13 @@ class Connection {
         bool new_user = false;
         bool help = false;
         bool version = false;
+        bool status = false;
 
         string user = "";
         string password = "";
         string sql_args = "";
         string format = "csv";
-        string userfile = "CSV/users.csv";
+        string userfile = "users.csv";
         ifstream i_flux;
         ofstream o_flux;
 

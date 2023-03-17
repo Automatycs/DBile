@@ -1,5 +1,17 @@
 #include "../include/connection.hpp"
 
+string Connection::get_user() {
+    return (this->user);
+}
+
+string Connection::get_sql() {
+    return (this->sql_args);
+}
+
+bool Connection::get_status() {
+    return (this->status);
+}
+
 void Connection::connect_user() {
     string tmp = "";
 
@@ -18,6 +30,7 @@ void Connection::connect_user() {
         flux_input.erase(0, flux_input.find(',') + 1);
         if (tmp == this->user && flux_input == this->password) {
             cout << "Connexion réussie:     Bienvenue " << this->user << endl;
+            this->status = true;
             return;
         }
     }
@@ -146,14 +159,13 @@ int Connection::connect(int size, char **args) {
             }
         }
     }
-
     if (this->version) {
         show_version();
-        return (0);
+        return (1);
     }
     if (this->help) {
         show_help();
-        return (0);
+        return (1);
     }
     if (this->new_user) {
         create_user();
@@ -161,12 +173,5 @@ int Connection::connect(int size, char **args) {
     if (this->login) {
         connect_user();
     }
-    return (0);
-}
-
-int main(int ac, char **av) {
-    Connection pouet;
-
-    pouet.connect(ac, av);
     return (0);
 }

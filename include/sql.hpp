@@ -13,11 +13,13 @@ using namespace std;
 class SQL {
     public:
         void choose_action(string str);
+        string get_current();
 
     private:
         string keywords[6] = {"create", "show", "use", "describe", "insert", "select"};
         void (SQL::*keywords_function[6])() = {&SQL::case_create, &SQL::case_show, &SQL::case_use, &SQL::case_describe, &SQL::case_insert, &SQL::case_select};
         vector<string> current_args;
+        string current_db = "";
 
         void case_create();
         void case_show();

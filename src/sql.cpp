@@ -1,5 +1,9 @@
 #include "../include/sql.hpp"
 
+string SQL::get_current() {
+    return (this->current_db);
+}
+
 string SQL::clean_sql(string str) {
     string to_clean;
     string to_small_one;
@@ -125,6 +129,7 @@ void SQL::case_use() {
     JE PASSE SUR LA DATABASE CHOISIE
     nom de la database = current_args[1]
     */
+    this->current_db = current_args[1];
     cout << "use db" << endl;
 }
 
@@ -198,11 +203,4 @@ void SQL::choose_action(string str) {
         }
     }
     cout << "Erreur:        La commande donnée n'est pas valide" << endl;
-}
-
-int main(int ac, char **av) {
-    SQL DBile;
-
-    DBile.choose_action(av[1]);
-    return (0);
 }
