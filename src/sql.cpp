@@ -1,10 +1,14 @@
 #include "../include/sql.hpp"
+#include "../include/Table.hpp"
+#include "../include/Database.hpp"
 
-string SQL::get_current() {
+string SQL::get_current()
+{
     return (this->current_db);
 }
 
-string SQL::clean_sql(string str) {
+string SQL::clean_sql(string str)
+{
     string to_clean;
     string to_small_one;
     string to_small_two;
@@ -14,7 +18,8 @@ string SQL::clean_sql(string str) {
     if (pos_end < pos_start)
         return ("");
 
-    if (pos_start == pos_end) {
+    if (pos_start == pos_end)
+    {
         for (long unsigned int i = 0; i < str.length(); i += 1)
             str[i] = tolower(str[i]);
         return (str);
@@ -36,18 +41,21 @@ string SQL::clean_sql(string str) {
     return (str);
 }
 
-void SQL::parse_sql(string str) {
+void SQL::parse_sql(string str)
+{
     this->current_args.clear();
     str = clean_sql(str);
 
-    for (; str.find(' ') != string::npos;) {
+    for (; str.find(' ') != string::npos;)
+    {
         this->current_args.push_back(str.substr(0, str.find(' ')));
-        str.erase(0,str.find(' ') + 1);
+        str.erase(0, str.find(' ') + 1);
     }
     this->current_args.push_back(str);
 }
 
-bool SQL::is_good_values(string str) {
+bool SQL::is_good_values(string str)
+{
     const size_t seek_open = str.find('(');
     const size_t seek_close = str.find(')');
 
@@ -56,71 +64,118 @@ bool SQL::is_good_values(string str) {
     return (true);
 }
 
-void SQL::case_create() {
-    if (this->current_args.size() < 3 || this->current_args.size() > 4) {
+vector<string> SQL::parse_parentheses(const string &str)
+{
+    string columns_raw = str;
+    vector<string> columns;
+
+    columns_raw = columns_raw.substr(1, columns_raw.size() - 2); // pop first and last parentheses
+
+    for (; columns_raw.find(',') != string::npos;)
+    {
+        columns.push_back(columns_raw.substr(0, columns_raw.find(',')));
+        columns_raw.erase(0, columns_raw.find(',') + 1);
+    }
+    // for (string c : columns) cout << c;
+    return columns;
+}
+
+void SQL::case_create()
+{
+    if (this->current_args.size() < 3 || this->current_args.size() > 4)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (this->current_args[1] != "database" && this->current_args[1] != "table") {
+    if (this->current_args[1] != "database" && this->current_args[1] != "table")
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
 
-    if (this->current_args[1] == "database") {
-        if (this->current_args.size() != 3) {
+    if (this->current_args[1] == "database")
+    {
+        if (this->current_args.size() != 3)
+        {
             cout << "Erreur:        La commande donnée n'est pas valide" << endl;
             return;
-        } else {
-            /*
-            JE CREER UNE DATABASE
-            nom de database = current_args[2]       
-            */
+        }
+        else
+        {
+
+            Database *d = new Database(current_args[2]);
             cout << "create db" << endl;
         }
-    } else {
-        if (this->current_args.size() != 4) {
-            cout << "Erreur:        La commande donnée n'est pas valide" << endl;
-            return;
-        } else if (!is_good_values(this->current_args[3])) {
+    }
+    else
+    {
+        if (this->current_args.size() != 4)
+        {
             cout << "Erreur:        La commande donnée n'est pas valide" << endl;
             return;
         }
-        else {
-            /*
-            JE CREER UNE TABLE
-            nom de table = current_args[2]
-            values = current_args[3] (à pars)
-            */
-            cout << "create table" << endl;
+        else if (!is_good_values(this->current_args[3]))
+        {
+            cout << "Erreur:        La commande donnée n'est pas valide" << endl;
+            return;
+        }
+        else
+        {
+            if (current_db != "")
+            {
+                /*
+                JE CREER UNE TABLE
+                nom de table = current_args[2]
+                values = current_args[3] (à pars)
+                */
+
+                cout << "CREATING: " << current_args[3];
+
+                Database *db = Database::find_db(current_db);
+
+                Table *tb = new Table(current_args[2], *db, parse_parentheses(current_args[3]));
+                cout << "create table" << endl;
+
+                return;
+            }
+            cout << "Erreur, pas de base de données sélectionnée.";
         }
     }
 }
 
-void SQL::case_show() {
-    if (this->current_args.size() != 2) {
+void SQL::case_show()
+{
+    if (this->current_args.size() != 2)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (this->current_args[1] != "databases" && this->current_args[1] != "tables") {
+    if (this->current_args[1] != "databases" && this->current_args[1] != "tables")
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
 
-    if (this->current_args[1] == "databases") {
-        /*
-        JE MONTRE LES DATABASES
-        */
-        cout << "show db" << endl;
-    } else {
-        /*
-        JE MONTRE LES TABLES
-        */
-        cout << "show table" << endl;
+    if (this->current_args[1] == "databases")
+    {
+
+        Database::show_databases();
+    }
+    else
+    {
+        if (current_db != "")
+        {
+            Database::find_db(current_db)->show_tables();
+            return;
+        }
+        cout << "Aucune base de données sélectionnée";
     }
 }
 
-void SQL::case_use() {
-    if (this->current_args.size() != 2) {
+void SQL::case_use()
+{
+    if (this->current_args.size() != 2)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
@@ -133,12 +188,15 @@ void SQL::case_use() {
     cout << "use db" << endl;
 }
 
-void SQL::case_describe() {
-    if (this->current_args.size() != 3) {
+void SQL::case_describe()
+{
+    if (this->current_args.size() != 3)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (this->current_args[1] != "table") {
+    if (this->current_args[1] != "table")
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
@@ -147,19 +205,34 @@ void SQL::case_describe() {
     JE DECRIS LA TABLE CHOISIE
     nom de la table = current_args[2]
     */
-    cout << "describe table" << endl;
+    if (current_db == "")
+    {
+        cout << "Erreur, pas de base de données sélectionnée." << endl;
+        return;
+    }
+    Table *temp = Database::find_db(current_db)->find_table(current_args[2]);
+    if (temp)
+    {
+        temp->describe();
+        return;
+    } // check table found
+    cout << "Erreur, table non trouvée" << endl;
 }
 
-void SQL::case_insert() {
-    if (this->current_args.size() != 5) {
+void SQL::case_insert()
+{
+    if (this->current_args.size() != 5)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (this->current_args[1] != "into" || this->current_args[3] != "values") {
+    if (this->current_args[1] != "into" || this->current_args[3] != "values")
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (!is_good_values(this->current_args[4])) {
+    if (!is_good_values(this->current_args[4]))
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
@@ -169,15 +242,17 @@ void SQL::case_insert() {
     nom de la table = current_args[2]
     argument à insert = current_args[4] (à pars)
     */
-    cout << "insert in table" << endl;
 }
 
-void SQL::case_select() {
-    if (this->current_args.size() != 4) {
+void SQL::case_select()
+{
+    if (this->current_args.size() != 4)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
-    if (this->current_args[2] != "from") {
+    if (this->current_args[2] != "from")
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
         return;
     }
@@ -190,14 +265,18 @@ void SQL::case_select() {
     cout << "select in table" << endl;
 }
 
-void SQL::choose_action(string str) {
+void SQL::choose_action(string str)
+{
     parse_sql(str);
 
-    if (this->current_args.size() == 0) {
+    if (this->current_args.size() == 0)
+    {
         cout << "Erreur:        La commande donnée n'est pas valide" << endl;
     }
-    for (int i = 0; i < 6; i += 1) {
-        if (this->current_args[0] == keywords[i]) {
+    for (int i = 0; i < 6; i += 1)
+    {
+        if (this->current_args[0] == keywords[i])
+        {
             (this->*(keywords_function[i]))();
             return;
         }

@@ -30,6 +30,7 @@ class SQL {
 
         string clean_sql(string str);
         void parse_sql(string str);
+        vector<string> parse_parentheses(const string &str);
         bool is_good_values(string str);
 
 };

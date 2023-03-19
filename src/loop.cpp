@@ -1,10 +1,12 @@
 #include "../include/loop.hpp"
 #include "../include/sql.hpp"
 #include "../include/connection.hpp"
+#include "../include/Database.hpp"
 
 void loop(int ac, char **av) {
     SQL DBile;
     Connection connect;
+    Database::init();
 
     bool quit = false;
     string action;
