@@ -2,6 +2,11 @@
 #include "../include/Table.hpp"
 #include "../include/Database.hpp"
 
+bool SQL::check_current_db()
+{
+    return Database::find_db(current_db) != nullptr;
+}
+
 string SQL::get_current()
 {
     return (this->current_db);
@@ -76,6 +81,8 @@ vector<string> SQL::parse_parentheses(const string &str)
         columns.push_back(columns_raw.substr(0, columns_raw.find(',')));
         columns_raw.erase(0, columns_raw.find(',') + 1);
     }
+    columns.push_back(columns_raw); // add text between last comma and endof string
+
     // for (string c : columns) cout << c;
     return columns;
 }
@@ -121,7 +128,8 @@ void SQL::case_create()
         }
         else
         {
-            if (current_db != "")
+            Database *db = Database::find_db(current_db);
+            if (db)
             {
                 /*
                 JE CREER UNE TABLE
@@ -134,7 +142,6 @@ void SQL::case_create()
                 Database *db = Database::find_db(current_db);
 
                 Table *tb = new Table(current_args[2], *db, parse_parentheses(current_args[3]));
-                cout << "create table" << endl;
 
                 return;
             }
@@ -163,12 +170,12 @@ void SQL::case_show()
     }
     else
     {
-        if (current_db != "")
+        if (Database::find_db(current_db) != nullptr)
         {
             Database::find_db(current_db)->show_tables();
             return;
         }
-        cout << "Aucune base de données sélectionnée";
+        cout << "Aucune base de données valide sélectionnée";
     }
 }
 
@@ -184,8 +191,14 @@ void SQL::case_use()
     JE PASSE SUR LA DATABASE CHOISIE
     nom de la database = current_args[1]
     */
-    this->current_db = current_args[1];
-    cout << "use db" << endl;
+    if (Database::find_db(current_args[1]) != nullptr)
+    {
+        cout << "USING " << current_args[1] << endl;
+        current_db = current_args[1];
+        return;
+    }
+        cout << "Erreur : Base de donnée non trouvée" << endl;
+
 }
 
 void SQL::case_describe()
@@ -205,7 +218,7 @@ void SQL::case_describe()
     JE DECRIS LA TABLE CHOISIE
     nom de la table = current_args[2]
     */
-    if (current_db == "")
+    if (Database::find_db(current_db) == nullptr)
     {
         cout << "Erreur, pas de base de données sélectionnée." << endl;
         return;
@@ -237,6 +250,20 @@ void SQL::case_insert()
         return;
     }
 
+    if (Database::find_db(current_db) != nullptr){
+        
+        Table *t = Database::find_db(current_db)->find_table(current_args[2]);
+        if (t) { // check its not nullptr (found)
+            t->insert(parse_parentheses(current_args[4]));
+            return;
+        }
+        cout << "La table "<< current_args[2] << " n'a pas été trouvée" << endl ;
+        return;
+
+    }
+    
+    cout << "Erreur, pas de base de données sélectionnée." << endl;
+
     /*
     J'INSERT DES DONNEES DANS LA TABLE
     nom de la table = current_args[2]
@@ -261,8 +288,17 @@ void SQL::case_select()
     JE SELECT DES DONNEES DANS LA TABLE
     value que l'on select = current_args[1]
     table que l'on fouille = current_args[3]
-    */
-    cout << "select in table" << endl;
+    */    
+    if (Database::find_db(current_db) != nullptr){
+        
+        Table *t = Database::find_db(current_db)->find_table(current_args[3]);
+        if (t) { // check its not nullptr (found)
+            t->select(parse_parentheses(current_args[1]));
+            return;
+        }
+        cout << "La table "<< current_args[2] << "n'a pas été trouvée" << endl ;
+
+    }
 }
 
 void SQL::choose_action(string str)

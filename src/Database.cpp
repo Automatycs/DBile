@@ -91,17 +91,13 @@ void Database::init()
 
             temp = tab;
             path = "db/" + db_p->name + "/" + temp + ".csv";
-            cout << "new table " << temp << ", columns : " << tab_columns.size() << endl;
             file.open(path);
             getline(file, first_line);
-            cout << " first_line: " << first_line <<  endl;
             cols = stringstream(first_line);
 
             while (getline(cols, temp_col, ','))
             { // for each column
-                string test =  temp_col;
-                cout << "new column " << test << endl;
-                tab_columns.push_back(test);
+                tab_columns.push_back(temp_col);
             }
             file.close();
 

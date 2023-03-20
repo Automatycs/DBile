@@ -1,6 +1,13 @@
 #include "../include/Table.hpp"
 #include "../include/Utils.hpp"
 #include <sstream>
+#include <sys/stat.h>
+
+bool file_exists(const std::string& filename) {
+    struct stat buffer;
+    return (stat(filename.c_str(), &buffer) == 0);
+}
+
 
 Table::Table(string nm, Database &dbx, vector<string> columns) : name(nm), db(dbx), cols(columns)
 {
@@ -11,6 +18,7 @@ Table::Table(string nm, Database &dbx, vector<string> columns) : name(nm), db(db
     // create if they don't exist
     system(string("mkdir -p " + folders).c_str());
 
+    if (file_exists(file_addr)) return;
     ofstream file;
     file.open(file_addr, ios::out);
     // TODO: Insert username to check privileges.
@@ -38,7 +46,7 @@ void Table::insert(const vector<string> &values) const
 void Table::select(vector<string> query_cols) const
 {
     
-    cout << "SELECT * FROM " << name << endl;
+    cout << "SELECT FROM " << name << endl;
     vector<vector<string>> data = read_all();
     vector<vector<string>> new_data;
 
@@ -47,7 +55,7 @@ void Table::select(vector<string> query_cols) const
         if (query_col == "*")
         {
             // Cancel all, we want everything
-            data = read_all();
+            new_data = read_all();
             break;
         }
 
